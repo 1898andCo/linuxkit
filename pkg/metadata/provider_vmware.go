@@ -46,7 +46,7 @@ func (p *ProviderVMware) Probe() bool {
 	return (err == nil) && len(b) > 0 && string(b) != " " && string(b) != "---"
 }
 
-// Extract gets both the AWS specific and generic userdata
+// Extract gets both the VmWare specific and generic userdata
 func (p *ProviderVMware) Extract() ([]byte, error) {
 	// Get host name. This must not fail
 	metaData, err := p.vmwareGet(guestMetaData)
