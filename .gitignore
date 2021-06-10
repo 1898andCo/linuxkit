@@ -20,3 +20,5 @@ Dockerfile.media
 *-state
 artifacts/*
 tools/alpine/iid
+.idea
+linuxkit.iml
