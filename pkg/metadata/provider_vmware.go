@@ -29,7 +29,7 @@ func NewVMware() *ProviderVMware {
 }
 
 func (p *ProviderVMware) String() string {
-	return "VMWARE"
+	return "VMWARE (CUSTOM)"
 }
 
 // Probe checks if we are running on VMware
@@ -52,6 +52,7 @@ func (p *ProviderVMware) Probe() bool {
 // Extract gets both the hostname and generic userdata
 func (p *ProviderVMware) Extract() ([]byte, error) {
 	// Get host name. This must not fail
+	/*
 	metaData, err := p.vmwareGet(guestMetaData)
 	if err != nil {
 		// This is not an error
@@ -65,7 +66,7 @@ func (p *ProviderVMware) Extract() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("VMWare: Failed to write metadata: %s", err)
 	}
-
+	*/
 	// Generic userdata
 	userData, err := p.vmwareGet(guestUserData)
 	if err != nil {
