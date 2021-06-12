@@ -10,8 +10,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/vmware/vmw-guestinfo/rpcvmx"
-	"github.com/vmware/vmw-guestinfo/vmcheck"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,7 +19,9 @@ const (
 )
 
 // ProviderVMware is the type implementing the Provider interface for VMware
-type ProviderVMware struct {}
+type ProviderVMware struct {
+	cmd string
+}
 
 // NewVMware returns a new ProviderVMware
 func NewVMware() *ProviderVMware {
@@ -29,43 +29,35 @@ func NewVMware() *ProviderVMware {
 }
 
 func (p *ProviderVMware) String() string {
-	return "VMWARE (CUSTOM)"
+	return "VMWARE"
 }
 
 // Probe checks if we are running on VMware
 func (p *ProviderVMware) Probe() bool {
-	isVM, err := vmcheck.IsVirtualWorld()
+	c, err := exec.LookPath("vmware-rpctool")
 	if err != nil {
-		log.Fatalf("Error: %s", err)
 		return false
 	}
 
-	if !isVM {
-		log.Fatalf("ERROR: not in a virtual world.")
-		return false
-	}
+	p.cmd = c
 
 	b, err := p.vmwareGet(guestUserData)
 	return (err == nil) && len(b) > 0 && string(b) != " " && string(b) != "---"
 }
 
-// Extract gets both the hostname and generic userdata
+// Extract gets both the Vmware specific and generic userdata
 func (p *ProviderVMware) Extract() ([]byte, error) {
 	// Get host name. This must not fail
 	/*
-	metaData, err := p.vmwareGet(guestMetaData)
-	if err != nil {
-		// This is not an error
-		log.Printf("VMware: Failed to get metadata: %s", err)
-		//return nil, err
-	}
+		metaData, err := p.vmwareGet(guestMetaData)
+		if err != nil {
+			return nil, err
+		}
 
-	if err == nil {
 		err = ioutil.WriteFile(path.Join(ConfigPath, "metadata"), metaData, 0644)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("VMWare: Failed to write metadata: %s", err)
-	}
+		if err != nil {
+			return nil, fmt.Errorf("VMWare: Failed to write metadata: %s", err)
+		}
 	*/
 	// Generic userdata
 	userData, err := p.vmwareGet(guestUserData)
@@ -80,26 +72,23 @@ func (p *ProviderVMware) Extract() ([]byte, error) {
 
 // vmwareGet gets and extracts the guest data
 func (p *ProviderVMware) vmwareGet(name string) ([]byte, error) {
-	config := rpcvmx.NewConfig()
-
-	// get the guest info value
-	sout, err := config.String(name, "")
+	cmdArg := func(n string) string {
+		return fmt.Sprintf("info-get %s", n)
+	}
+	// get the gusest info value
+	out, err := exec.Command(p.cmd, cmdArg(name)).Output()
 	if err != nil {
 		eErr := err.(*exec.ExitError)
-		log.Debugf("Getting guest info %s failed: error %s", name, string(eErr.Stderr))
+		log.Debugf("Getting guest info %s failed: error %s", cmdArg(name), string(eErr.Stderr))
 		return nil, err
 	}
 
-	// get the guest info encryption
-	senc, err := config.String(name+".encoding", "")
+	enc, err := exec.Command(p.cmd, cmdArg(name+".encoding")).Output()
 	if err != nil {
 		eErr := err.(*exec.ExitError)
 		log.Debugf("Getting guest info %s.encoding failed: error %s", name, string(eErr.Stderr))
 		return nil, err
 	}
-
-	out := []byte(sout)
-	enc := []byte(senc)
 
 	switch strings.TrimSuffix(string(enc), "\n") {
 	case " ":
