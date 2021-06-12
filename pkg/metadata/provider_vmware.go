@@ -54,10 +54,14 @@ func (p *ProviderVMware) Extract() ([]byte, error) {
 	// Get host name. This must not fail
 	metaData, err := p.vmwareGet(guestMetaData)
 	if err != nil {
-		return nil, err
+		// This is not an error
+		log.Printf("VMware: Failed to get metadata: %s", err)
+		//return nil, err
 	}
 
-	err = ioutil.WriteFile(path.Join(ConfigPath, "metadata"), metaData, 0644)
+	if err == nil {
+		err = ioutil.WriteFile(path.Join(ConfigPath, "metadata"), metaData, 0644)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("VMWare: Failed to write metadata: %s", err)
 	}
@@ -65,7 +69,7 @@ func (p *ProviderVMware) Extract() ([]byte, error) {
 	// Generic userdata
 	userData, err := p.vmwareGet(guestUserData)
 	if err != nil {
-		log.Printf("VMware: Failed to get user-data: %s", err)
+		log.Printf("VMware: Failed to get userdata: %s", err)
 		// This is not an error
 		return nil, nil
 	}
