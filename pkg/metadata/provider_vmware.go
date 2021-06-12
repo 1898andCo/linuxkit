@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
-	"path"
+	//"path"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -45,7 +45,7 @@ func (p *ProviderVMware) Probe() bool {
 	return (err == nil) && len(b) > 0 && string(b) != " " && string(b) != "---"
 }
 
-// Extract gets both the Vmware specific and generic userdata
+// Extract gets both the AWS specific and generic userdata
 func (p *ProviderVMware) Extract() ([]byte, error) {
 	// Get host name. This must not fail
 	/*
@@ -62,7 +62,7 @@ func (p *ProviderVMware) Extract() ([]byte, error) {
 	// Generic userdata
 	userData, err := p.vmwareGet(guestUserData)
 	if err != nil {
-		log.Printf("VMware: Failed to get userdata: %s", err)
+		log.Printf("VMware: Failed to get user-data: %s", err)
 		// This is not an error
 		return nil, nil
 	}
